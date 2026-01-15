@@ -7,14 +7,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 
 // Composable function for message input section
 @Composable
 fun PagerInputUI(
     // Callback when SEND button is clicked
-    onSendClick: (String) -> Unit,
+    onSendClick: (String) -> Unit
 
 ) {
     // Holds the text typed by the user
@@ -22,6 +24,8 @@ fun PagerInputUI(
 
     // Helps keyboard focus
     val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
 
     // Vertical layout for input field and buttons
     Column(
@@ -61,6 +65,9 @@ fun PagerInputUI(
                 if (messageText.isNotBlank()) {
                     onSendClick(messageText)
                     messageText = ""
+
+                    //keep keyboard open after send
+                    focusRequester.requestFocus()
                 }
             },
             modifier = Modifier
@@ -77,8 +84,5 @@ fun PagerInputUI(
 
     }
 
-    // Automatically request focus so keyboard opens
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
+
 }
