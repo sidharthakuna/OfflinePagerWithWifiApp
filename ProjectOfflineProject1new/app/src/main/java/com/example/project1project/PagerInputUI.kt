@@ -15,8 +15,7 @@ import androidx.compose.ui.unit.sp
 fun PagerInputUI(
     // Callback when SEND button is clicked
     onSendClick: (String) -> Unit,
-    // Callback to simulate receiving a message
-    onFakeReceive: (String) -> Unit
+
 ) {
     // Holds the text typed by the user
     var messageText by remember { mutableStateOf("") }
@@ -74,15 +73,8 @@ fun PagerInputUI(
             Text("SEND", color = Color.Black)
         }
 
-        // FAKE RECEIVE button (for testing/demo)
-        Button(
-            onClick = { onFakeReceive("Hello from another phone") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-        ) {
-            Text("Fake Receive")
-        }
+
+
     }
 
     // Automatically request focus so keyboard opens
