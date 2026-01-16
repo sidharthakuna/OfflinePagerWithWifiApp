@@ -2,6 +2,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+
+    // 🔴 REQUIRED for Room annotation processing
+    kotlin("kapt")
 }
 
 android {
@@ -47,12 +50,29 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
 
+    // -------------------------------
+    // ROOM DATABASE (LOCAL STORAGE)
+    // -------------------------------
+
+    // Core Room runtime
+    implementation(libs.androidx.room.runtime)
+
+    // Kotlin extensions + coroutines support
+    implementation(libs.androidx.room.ktx)
+
+    // Annotation processor (REQUIRED)
+    kapt(libs.androidx.room.compiler)
+
+    // (existing dependencies stay as they are)
+
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.ui)
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

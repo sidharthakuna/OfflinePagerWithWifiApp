@@ -13,16 +13,14 @@ import javax.crypto.spec.SecretKeySpec
  * Ued for End -to -End Encryption(E2EE)
  *
  * NOTE:
- * ~AES/ECB is used only for hackathon demo
- * ~Production apps should use ASE/GCM WITH IV
+ * ~Uses AES/GCM/NoPadding with Android KeyStore
+ * ~AES/ECB is insecure and Must NOt be used
  *
  */
 
 object CryptoUtils{
-    //16-byte secret key (AES - 128)
-    private const val SECRET_KEY = "CampusPagerKey16"
     private const val TRANSFORMATION="AES/GCM/NoPadding"
-    private const val IV_SIZE=12               //rECOMMENDED FOR GCM
+    //private const val IV_SIZE=12               //rECOMMENDED FOR GCM
     private const val TAG_SIZE=128            //AUTHENTICATION TAG SIZE
 
     /*
@@ -30,56 +28,52 @@ object CryptoUtils{
     */
 
     fun encrypt(text:String):String{
+        require(text.isNotBlank()){"Message cannto be empty"}
         val cipher=Cipher.getInstance(TRANSFORMATION)
 
-        val iv=ByteArray(IV_SIZE)
-        SecureRandom().nextBytes(iv)
 
-        val keySpec=SecretKeySpec(
-            SECRET_KEY.toByteArray(),
-            "AES"
-        )
-
-        val gcmSpec= GCMParameterSpec(TAG_SIZE,iv)
-        cipher.init(Cipher.ENCRYPT_MODE,keySpec,gcmSpec)
-
-        val cipherText=cipher.doFinal(text.toByteArray())
-
-        //Imp prepend iv to ciphertext
-        val combined =iv+cipherText
+        // get AES key security from KeyStore
+        val secretKey= KeyStoreManager.getOrCreateSecretKey()
 
 
-        //convert encrypted bytes -> readable string
-        return Base64.encodeToString(combined,Base64.DEFAULT)
+//       val iv=ByteArray(IV_SIZE)
+//        SecureRandom().nextBytes(iv)
+
+        // 🔐 IMPORTANT: DO NOT PROVIDE IV — let Keystore generate it
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+
+        val iv = cipher.iv              // Keystore-generated IV
+        val cipherText = cipher.doFinal(text.toByteArray(Charsets.UTF_8))
+
+
+        // Store IV length + IV + ciphertext
+        val combined = ByteArray(1 + iv.size + cipherText.size)
+        combined[0] = iv.size.toByte()
+        System.arraycopy(iv, 0, combined, 1, iv.size)
+        System.arraycopy(cipherText, 0, combined, 1 + iv.size, cipherText.size)
+
+        return Base64.encodeToString(combined, Base64.NO_WRAP)
     }
     /*
         *DESCRYPTS BASE64 ENCRYPED STRING INTO ORIGINAL TEXT
      */
     fun decrypt(encryptedText: String):String{
         return try{
-            val decoded=Base64.decode(encryptedText,Base64.DEFAULT)
+            val decoded =Base64.decode(encryptedText,Base64.NO_WRAP)
 
-            //EXTRACT IV AND CIPHERTEXT
-            val iv=decoded.copyOfRange(0,IV_SIZE)
-            val cipherText=decoded.copyOfRange(IV_SIZE,decoded.size)
+            val ivSize=decoded[0].toInt()
+            val iv=decoded.copyOfRange(1,1+ivSize)
+            val cipherText=decoded.copyOfRange(1+ivSize,decoded.size)
 
             val cipher=Cipher.getInstance(TRANSFORMATION)
+            val secretKey=KeyStoreManager.getOrCreateSecretKey()
 
-            val keySpec= SecretKeySpec(
-                SECRET_KEY.toByteArray(),
-                "AES"
-            )
-
-            val gcmSpec= GCMParameterSpec(TAG_SIZE,iv)
-            cipher.init(Cipher.DECRYPT_MODE,keySpec,gcmSpec)
-
-
-            String(cipher.doFinal(cipherText))
-        }catch(e: Exception){
-            //if text is not encrypted ,return as - is
+            val spec=GCMParameterSpec(TAG_SIZE,iv)
+            cipher.init(Cipher.DECRYPT_MODE,secretKey,spec)
+            String(cipher.doFinal(cipherText),Charsets.UTF_8)
+        }catch(e:Exception){
             encryptedText
         }
-
     }
 }
 
