@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.project1project.data.MessageRepository
+import com.example.project1project.simulation.MessageSimulator
 import kotlinx.coroutines.launch
 
 class PagerViewModel(
@@ -14,9 +15,7 @@ class PagerViewModel(
     val messages = mutableStateListOf<PagerMessage>()
 
     init {
-       viewModelScope.launch{
-           loadMessages()
-       }
+      loadMessages()
     }
 
     // Load messages from database
@@ -32,7 +31,14 @@ class PagerViewModel(
         if (text.isBlank()) return
 
         viewModelScope.launch {
+            // save sent messages
             repository.send(text)
+            loadMessages()
+
+            //simulate incoming encrypted message
+            val encryptedReply=
+                MessageSimulator.simulateIncomingMessage()
+            repository.receive(encryptedReply)
             loadMessages()
         }
     }

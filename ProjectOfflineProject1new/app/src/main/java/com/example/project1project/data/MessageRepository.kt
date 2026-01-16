@@ -24,7 +24,7 @@ class MessageRepository(
                     id=it.id,
                     text=CryptoUtils.decrypt(it.encryptedText),
                     timestamp=it.timestamp,
-                    type=MessageType.SENT  //LOCAL MESSAGES
+                    type=it.type
                 )
             }
         }
@@ -37,7 +37,8 @@ class MessageRepository(
                 EncryptedMessageEntity(
                     id=UUID.randomUUID().toString(),
                     encryptedText=encryptedText,
-                    timestamp=System.currentTimeMillis()
+                    timestamp=System.currentTimeMillis(),
+                    type=MessageType.SENT
                 )
             )
         }
@@ -48,7 +49,8 @@ class MessageRepository(
                 EncryptedMessageEntity(
                     id = UUID.randomUUID().toString(),
                     encryptedText = encryptedText,
-                    timestamp = System.currentTimeMillis()
+                    timestamp = System.currentTimeMillis(),
+                    type=MessageType.RECEIVED
                 )
             )
         }

@@ -128,7 +128,7 @@ fun PagerScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
+                            .padding(vertical = 6.dp),
                         horizontalArrangement =
                             if (msg.type == MessageType.SENT)
                                 Arrangement.End
@@ -136,20 +136,39 @@ fun PagerScreen(
                                 Arrangement.Start
                     ) {
                         Card(
+                            modifier=Modifier.fillMaxWidth(0.75f),  //chat like width
                             colors = CardDefaults.cardColors(
                                 containerColor =
                                     if (msg.type == MessageType.SENT)
                                         Color(0xFF00C853)
                                     else
-                                        Color.Gray
+                                        Color(0xFF2A2A2A)
+
+
                             ),
-                            shape = RoundedCornerShape(8.dp)
+                            shape = RoundedCornerShape(
+                                topStart =16.dp,
+                                topEnd=16.dp,
+                                bottomEnd =
+                                    if (msg.type == MessageType.SENT) 0.dp else 16.dp,
+                                bottomStart =
+                                    if (msg.type == MessageType.SENT) 16.dp else 0.dp
+                            ),
+                            elevation=CardDefaults.cardElevation(4.dp)
                         ) {
                             Text(
                                 text = msg.text,
-                                modifier = Modifier.padding(8.dp),
-                                color = Color.Black,
-                                fontSize = 16.sp
+                                modifier = Modifier.padding(
+                                    horizontal = 14.dp,
+                                    vertical =10.dp
+                                ),
+                                color =
+                                    if (msg.type == MessageType.SENT)
+                                        Color.Black
+                                    else
+                                        Color.White,
+                                fontSize = 15.sp,
+                                lineHeight=20.sp
                             )
                         }
                     }
