@@ -16,6 +16,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,6 +28,9 @@ import androidx.lifecycle.ViewModel
 import com.example.project1project.data.AppDatabase
 import com.example.project1project.data.MessageRepository
 import androidx.lifecycle.ViewModelProvider
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 import com.example.project1project.ui.theme.Project1projectTheme
 
@@ -97,13 +102,55 @@ fun PagerScreen(
     ) {
 
         // -------- APP TITLE --------
-        Text(
-            text = "CAMPUS PAGER",
-            color = Color(0xFF00C853),
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
+        var showClearDialog by remember { mutableStateOf(false) }
+       Row(
+           modifier = Modifier
+               .fillMaxWidth()
+               .padding(vertical = 4.dp),
+           verticalAlignment = Alignment.CenterVertically,
+           horizontalArrangement = Arrangement.SpaceBetween
+       ){
+           Text(
+               text="CAMPUS PAGER",
+               color =Color(0xFF00C853),
+               fontSize=22.sp,
+               fontWeight = FontWeight.Bold
+           )
+           TextButton(
+               onClick = { showClearDialog = true }
+           ){
+               Text(
+                   text="Clear",
+                   color=Color.Red,
+                   fontSize = 14.sp
+               )
+           }
+       }
+        if (showClearDialog) {
+            AlertDialog(
+                onDismissRequest = { showClearDialog = false },
+                title = { Text("Clear chat?") },
+                text = { Text("All messages will be permanently deleted.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.clearChat()
+                            showClearDialog = false
+                        }
+                    ) {
+                        Text("Clear", color = Color.Red)
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showClearDialog = false }
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -195,7 +242,7 @@ fun PagerScreen(
         // -------- AUTO SCROLL --------
         LaunchedEffect(messages.size) {
             if (messages.isNotEmpty()) {
-                listState.animateScrollToItem(messages.size - 1)
+                listState.scrollToItem(messages.size - 1)
             }
         }
 
@@ -209,3 +256,5 @@ fun PagerScreen(
         )
     }
 }
+
+

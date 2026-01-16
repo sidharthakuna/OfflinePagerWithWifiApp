@@ -13,4 +13,8 @@ interface MessageDao{
 
     @Query("SELECT * FROM messages ORDER BY timestamp ASC")
     suspend fun getAll():List<EncryptedMessageEntity>
+
+    //Delete message from chart
+    @Query("DELETE FROM messages")
+    suspend fun deleteAllMessages()
 }

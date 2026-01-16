@@ -54,4 +54,10 @@ class MessageRepository(
                 )
             )
         }
+
+    //Clear AllMessages
+    suspend fun clearAllMessages() =
+        withContext(Dispatchers.IO){
+            messageDao.deleteAllMessages()
+        }
 }

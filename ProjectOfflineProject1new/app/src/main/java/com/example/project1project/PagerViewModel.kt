@@ -50,4 +50,12 @@ class PagerViewModel(
             loadMessages()
         }
     }
+
+    //For clearing the chart
+    fun clearChat(){
+        viewModelScope.launch{
+            repository.clearAllMessages()
+            messages.clear()  //Clear UI state immediately
+        }
+    }
 }
