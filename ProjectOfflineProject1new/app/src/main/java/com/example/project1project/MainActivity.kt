@@ -1,5 +1,14 @@
 package com.example.project1project
 
+
+
+
+import com.example.project1project.ui.connection.ConnectionScreen
+import com.example.project1project.ui.connection.ConnectionViewModel
+
+
+import androidx.compose.runtime.*
+
 // -------- ANDROID CORE IMPORTS --------
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -14,10 +23,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,14 +37,18 @@ import androidx.lifecycle.ViewModel
 import com.example.project1project.data.AppDatabase
 import com.example.project1project.data.MessageRepository
 import androidx.lifecycle.ViewModelProvider
-
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import com.example.project1project.communication.MessageTransport
 
 import com.example.project1project.ui.theme.Project1projectTheme
 
 //-Utils for timeUtiles timeline------
 import com.example.project1project.utils.TimeUtils
+
+import androidx.lifecycle.viewmodel.compose.viewModel
+
+
+
+
 
 /* =========================================================
    MAIN ACTIVITY
@@ -47,7 +60,7 @@ import com.example.project1project.utils.TimeUtils
 class MainActivity : ComponentActivity() {
 
     // ViewModel survives rotation & configuration changes
-    private val viewModel: PagerViewModel by viewModels {
+    private val pagerViewModel: PagerViewModel by viewModels {
         val database = AppDatabase.get(applicationContext)
         val repository = MessageRepository(database.messageDao())
 
@@ -67,16 +80,37 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Project1projectTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { paddingValues ->
-                    PagerScreen(
-                        viewModel = viewModel,
-                        modifier = Modifier
-                            .padding(paddingValues)
+                // 🔑 REQUIRED state
+                var connectedTransport by remember {
+                    mutableStateOf<MessageTransport?>(null)
+                }
+
+                val connectionViewModel: ConnectionViewModel = viewModel()
+
+
+                Scaffold{ paddingValues ->
+                    Box(
+                        modifier= Modifier
                             .fillMaxSize()
-                    )
+                            .padding(paddingValues)
+                    ){
+                        if(connectedTransport  == null){
+                            ConnectionScreen(
+                                viewModel = connectionViewModel,
+                                onConnected = { transport ->
+                                    pagerViewModel.setTransport(transport)
+                                    connectedTransport  =transport
+                                }
+                            )
+                        }else{
+                            PagerScreen(viewModel = pagerViewModel)
+                        }
+                    }
+
                 }
             }
         }
+
     }
 }
 /* =========================================================

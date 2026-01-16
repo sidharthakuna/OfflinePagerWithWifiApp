@@ -9,8 +9,9 @@ import javax.crypto.spec.SecretKeySpec
 /*
  *CryptoUtils
  * ------
- * Handles AES encrytion & decryption
- * Ued for End -to -End Encryption(E2EE)
+// Handles AES encryption & decryption
+// Used for local encrypted payloads (not cross-device E2EE)
+
  *
  * NOTE:
  * ~Uses AES/GCM/NoPadding with Android KeyStore

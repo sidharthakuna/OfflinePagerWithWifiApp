@@ -8,24 +8,18 @@ import kotlinx.coroutines.launch
 
 //Connect Transport to viewModel
 import com.example.project1project.communication.MessageTransport
-import com.example.project1project.communication.SimulatedTransport
 import com.example.project1project.security.CryptoUtils
 
 class PagerViewModel(
     private val repository: MessageRepository
 ) : ViewModel() {
 
-    //transport layer(wifi/bluetooth later)
-    private val transport : MessageTransport = SimulatedTransport()
+    private var transport : MessageTransport? = null
 
     // UI-observed message list
     val messages = mutableStateListOf<PagerMessage>()
 
     init {
-        //listen for incoming encrypted messages
-        transport.startListening{receiveEncryptedMessage->
-            receiveEncryptedMessage(receiveEncryptedMessage)
-        }
         loadMessages()
     }
 
@@ -51,7 +45,7 @@ class PagerViewModel(
             loadMessages()
 
             //send encrypted messae throung transport
-            transport.send(encrypted)
+            transport?.send(encrypted)
 
         }
     }
@@ -69,6 +63,13 @@ class PagerViewModel(
         viewModelScope.launch{
             repository.clearAllMessages()
             messages.clear()  //Clear UI state immediately
+        }
+    }
+
+    fun setTransport(t: MessageTransport){
+        transport =t
+        transport?.startListening { encrypted ->
+            receiveEncryptedMessage(encrypted)
         }
     }
 }
