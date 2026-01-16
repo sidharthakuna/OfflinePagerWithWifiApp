@@ -4,18 +4,29 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.project1project.data.MessageRepository
-import com.example.project1project.simulation.MessageSimulator
 import kotlinx.coroutines.launch
+
+//Connect Transport to viewModel
+import com.example.project1project.communication.MessageTransport
+import com.example.project1project.communication.SimulatedTransport
+import com.example.project1project.security.CryptoUtils
 
 class PagerViewModel(
     private val repository: MessageRepository
 ) : ViewModel() {
 
+    //transport layer(wifi/bluetooth later)
+    private val transport : MessageTransport = SimulatedTransport()
+
     // UI-observed message list
     val messages = mutableStateListOf<PagerMessage>()
 
     init {
-      loadMessages()
+        //listen for incoming encrypted messages
+        transport.startListening{receiveEncryptedMessage->
+            receiveEncryptedMessage(receiveEncryptedMessage)
+        }
+        loadMessages()
     }
 
     // Load messages from database
@@ -31,15 +42,17 @@ class PagerViewModel(
         if (text.isBlank()) return
 
         viewModelScope.launch {
+            //Encrypted message
+            val encrypted= CryptoUtils.encrypt(text)
+
+
             // save sent messages
             repository.send(text)
             loadMessages()
 
-            //simulate incoming encrypted message
-            val encryptedReply=
-                MessageSimulator.simulateIncomingMessage()
-            repository.receive(encryptedReply)
-            loadMessages()
+            //send encrypted messae throung transport
+            transport.send(encrypted)
+
         }
     }
 
@@ -59,3 +72,4 @@ class PagerViewModel(
         }
     }
 }
+
