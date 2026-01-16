@@ -29,6 +29,9 @@ import androidx.lifecycle.ViewModelProvider
 
 import com.example.project1project.ui.theme.Project1projectTheme
 
+//-Utils for timeUtiles timeline------
+import com.example.project1project.utils.TimeUtils
+
 /* =========================================================
    MAIN ACTIVITY
    ---------------------------------------------------------
@@ -156,20 +159,33 @@ fun PagerScreen(
                             ),
                             elevation=CardDefaults.cardElevation(4.dp)
                         ) {
-                            Text(
-                                text = msg.text,
+                            Column(
                                 modifier = Modifier.padding(
                                     horizontal = 14.dp,
-                                    vertical =10.dp
-                                ),
-                                color =
-                                    if (msg.type == MessageType.SENT)
-                                        Color.Black
-                                    else
-                                        Color.White,
-                                fontSize = 15.sp,
-                                lineHeight=20.sp
-                            )
+                                    vertical = 10.dp
+                                )
+                            ){
+                                //Message text
+                                Text(
+                                    text=msg.text,
+                                    color=Color.White,
+                                    fontSize = 15.sp,
+                                    lineHeight=20.sp
+                                )
+                                Spacer(modifier=Modifier.height(4.dp))
+
+                                //TimeStamp
+                                Row(
+                                    modifier=Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End
+                                ){
+                                    Text(
+                                        text = TimeUtils.formatTime(msg.timestamp),
+                                        color = Color.White.copy(alpha = 0.7f),
+                                        fontSize = 11.sp
+                                    )
+                                }
+                            }
                         }
                     }
                 }
