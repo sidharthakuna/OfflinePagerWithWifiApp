@@ -17,4 +17,14 @@ interface MessageDao{
     //Delete message from chart
     @Query("DELETE FROM messages")
     suspend fun deleteAllMessages()
+
+    @Query("""
+        delete from messages
+        WHERE id NOT IN (
+        SELECT id FROM messages
+        ORDER BY timestamp DESC
+        LIMIT :limit
+        )
+    """)
+    suspend fun keepLastMessages(limit:Int)
 }

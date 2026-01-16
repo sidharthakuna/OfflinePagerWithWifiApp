@@ -41,6 +41,8 @@ class MessageRepository(
                     type=MessageType.SENT
                 )
             )
+            //LIMIT STORAGE
+            messageDao.keepLastMessages(500)
         }
     //Receive message (already encrypted)
     suspend fun receive(encryptedText: String) =
@@ -53,11 +55,18 @@ class MessageRepository(
                     type=MessageType.RECEIVED
                 )
             )
+
+            //LIMIT STORAGE
+            messageDao.keepLastMessages(500)
         }
 
     //Clear AllMessages
     suspend fun clearAllMessages() =
         withContext(Dispatchers.IO){
             messageDao.deleteAllMessages()
+        }
+    suspend fun cleanupOldMessages(limit:Int =500)=
+        withContext(Dispatchers.IO){
+            messageDao.keepLastMessages(limit)
         }
 }
