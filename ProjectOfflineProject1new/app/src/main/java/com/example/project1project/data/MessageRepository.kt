@@ -2,41 +2,54 @@ package com.example.project1project.data
 
 import com.example.project1project.MessageType
 import com.example.project1project.PagerMessage
+import com.example.project1project.data.dao.MessageDao
+import com.example.project1project.data.entity.EncryptedMessageEntity
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+
 import java.util.UUID
 
 ////--------------Import for the encryption and decoding the message ---------------
 import com.example.project1project.security.CryptoUtils
 
-class MessageRepository{
-    // Internal message list
-    private val _messages=mutableListOf<PagerMessage>()
+class MessageRepository(
+    private val messageDao : MessageDao
+){
 
-    //Expose read-only list
-    fun getMessages(): List<PagerMessage> = _messages
+    //Load messages from DB (decrypt for UI)
+    suspend fun getMessages():List<PagerMessage> =
+        withContext(Dispatchers.IO){
+            messageDao.getAll().map{
+                PagerMessage(
+                    id=it.id,
+                    text=CryptoUtils.decrypt(it.encryptedText),
+                    timestamp=it.timestamp,
+                    type=MessageType.SENT  //LOCAL MESSAGES
+                )
+            }
+        }
+    // Send messages (encrypt -> save )
+    suspend fun send(text : String)=
+        withContext(Dispatchers.IO){
+            val encryptedText = CryptoUtils.encrypt(text)
 
-    //Add sent Messages
-    fun send(text:String){
-        // 🔐ENCRYPT MESSAGE BEFORE SAVING
-        val encryptedText= CryptoUtils.encrypt(text)
-
-        _messages.add(
-            PagerMessage(
-                id=UUID.randomUUID().toString(),
-                text = encryptedText,    //STORED AS ENCRYPTED
-                timestamp=System.currentTimeMillis(),
-                type=MessageType.SENT
+            messageDao.insert(
+                EncryptedMessageEntity(
+                    id=UUID.randomUUID().toString(),
+                    encryptedText=encryptedText,
+                    timestamp=System.currentTimeMillis()
+                )
             )
-        )
-    }
-    fun receive(text:String){
-        //INCOMING TEXT IS ALREADY ENCRYPTED
-        _messages.add(
-            PagerMessage(
-                id=UUID.randomUUID().toString(),
-                text=text,
-                timestamp=System.currentTimeMillis(),
-                type=MessageType.RECEIVED
+        }
+    //Receive message (already encrypted)
+    suspend fun receive(encryptedText: String) =
+        withContext(Dispatchers.IO) {
+            messageDao.insert(
+                EncryptedMessageEntity(
+                    id = UUID.randomUUID().toString(),
+                    encryptedText = encryptedText,
+                    timestamp = System.currentTimeMillis()
+                )
             )
-        )
-    }
+        }
 }

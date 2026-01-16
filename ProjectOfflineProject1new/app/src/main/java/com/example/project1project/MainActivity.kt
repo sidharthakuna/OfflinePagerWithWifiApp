@@ -1,8 +1,5 @@
 package com.example.project1project
 
-// -------- SECURITY IMPORT --------
-import com.example.project1project.security.CryptoUtils
-
 // -------- ANDROID CORE IMPORTS --------
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -25,6 +22,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import com.example.project1project.data.AppDatabase
+import com.example.project1project.data.MessageRepository
+import androidx.lifecycle.ViewModelProvider
 
 import com.example.project1project.ui.theme.Project1projectTheme
 
@@ -38,19 +39,27 @@ import com.example.project1project.ui.theme.Project1projectTheme
 class MainActivity : ComponentActivity() {
 
     // ViewModel survives rotation & configuration changes
-    private val viewModel: PagerViewModel by viewModels()
+    private val viewModel: PagerViewModel by viewModels {
+        val database = AppDatabase.get(applicationContext)
+        val repository = MessageRepository(database.messageDao())
+
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                if (modelClass.isAssignableFrom(PagerViewModel::class.java)) {
+                    @Suppress("UNCHECKED_CAST")
+                    return PagerViewModel(repository) as T
+                }
+                throw IllegalArgumentException("Unknown ViewModel class")
+            }
+        }
+
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-
-
         setContent {
             Project1projectTheme {
-                Scaffold(
-                    modifier = Modifier
-                        .fillMaxSize()
-                ) { paddingValues ->
+                Scaffold(modifier = Modifier.fillMaxSize()) { paddingValues ->
                     PagerScreen(
                         viewModel = viewModel,
                         modifier = Modifier
@@ -62,7 +71,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
 /* =========================================================
    PAGER SCREEN (MAIN UI)
    ---------------------------------------------------------
@@ -137,9 +145,8 @@ fun PagerScreen(
                             ),
                             shape = RoundedCornerShape(8.dp)
                         ) {
-                            // 🔐 Decrypted ONLY for display (E2EE safe)
                             Text(
-                                text = viewModel.getDisplayText(msg.text),
+                                text = msg.text,
                                 modifier = Modifier.padding(8.dp),
                                 color = Color.Black,
                                 fontSize = 16.sp
