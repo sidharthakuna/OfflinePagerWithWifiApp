@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 if (modelClass.isAssignableFrom(PagerViewModel::class.java)) {
                     @Suppress("UNCHECKED_CAST")
-                    return PagerViewModel(repository) as T
+                    return PagerViewModel(repository,applicationContext) as T
                 }
                 throw IllegalArgumentException("Unknown ViewModel class")
             }
@@ -282,13 +282,24 @@ fun PagerScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        var receiverPagerId by remember { mutableStateOf("")}
+
+        OutlinedTextField(
+            value=receiverPagerId,
+            onValueChange={receiverPagerId = it },
+            label={Text("Reciever Pager Id")},
+            modifier = Modifier.fillMaxWidth()
+
+        )
+
         // -------- INPUT SECTION --------
         PagerInputUI(
             onSendClick = { text ->
-                viewModel.sendMessage(text)
+                viewModel.sendMessage(text,receiverPagerId)
             }
         )
     }
 }
+
 
 

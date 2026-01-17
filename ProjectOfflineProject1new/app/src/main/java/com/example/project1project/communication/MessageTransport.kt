@@ -1,5 +1,7 @@
 package com.example.project1project.communication
 
+import com.example.project1project.mesh.MessagePacket
+
 /*
  * MessageTransport
  * -----------------
@@ -13,10 +15,10 @@ package com.example.project1project.communication
 
 interface MessageTransport{
     //Send encrypted message to another device
-    fun send(encryptedMessage:String)
+    fun send(packet:MessagePacket)
 
     //start listening for incomming encrypted messages
-    fun startListening(onMessageReceived:(String)-> Unit)
+    fun startListening(onPacketReceived:(MessagePacket)-> Unit)
 
     //Stop listening (clean up)
     fun stop()

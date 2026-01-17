@@ -1,8 +1,11 @@
 package com.example.project1project.communication
-
+import com.example.project1project.mesh.MessagePacket
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+
+
 
 /*
  * SimulatedTransport
@@ -12,18 +15,19 @@ import kotlinx.coroutines.launch
  */
 class SimulatedTransport : MessageTransport {
 
-    private var listener: ((String) -> Unit)? = null
+    private var listener: ((MessagePacket) -> Unit)? = null
 
-    override fun send(encryptedMessage: String) {
+    @OptIn(DelicateCoroutinesApi::class)
+    override fun send(packet: MessagePacket) {
         // Simulate network delay
         GlobalScope.launch {
-            delay(1000)
-            listener?.invoke(encryptedMessage)
+            delay(500)
+            listener?.invoke(packet)
         }
     }
 
-    override fun startListening(onMessageReceived: (String) -> Unit) {
-        listener = onMessageReceived
+    override fun startListening(onPacketReceived: (MessagePacket) -> Unit) {
+        listener = onPacketReceived
     }
 
     override fun stop() {
