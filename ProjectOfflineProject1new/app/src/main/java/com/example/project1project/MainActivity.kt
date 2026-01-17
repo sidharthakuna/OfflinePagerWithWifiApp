@@ -1,6 +1,8 @@
 package com.example.project1project
 
-
+//----REquest Permissions
+import androidx.activity.result.contract.ActivityResultContracts
+import com.example.project1project.utils.PermissionHelper
 
 
 import com.example.project1project.ui.connection.ConnectionScreen
@@ -75,9 +77,18 @@ class MainActivity : ComponentActivity() {
         }
 
     }
+    private val permissionLauncher=
+        registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ){ permissions ->
+            //No op : we just need permission granted
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        permissionLauncher.launch(
+            PermissionHelper.bluetoothPermissions()
+        )
         setContent {
             Project1projectTheme {
                 // 🔑 REQUIRED state
