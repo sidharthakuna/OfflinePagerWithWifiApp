@@ -47,9 +47,7 @@ import com.example.project1project.ui.theme.Project1projectTheme
 import com.example.project1project.utils.TimeUtils
 
 import androidx.lifecycle.viewmodel.compose.viewModel
-
-
-
+import com.example.project1project.identity.PagerIdManager
 
 
 /* =========================================================
@@ -61,22 +59,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
    ========================================================= */
 class MainActivity : ComponentActivity() {
 
-    // ViewModel survives rotation & configuration changes
-    private val pagerViewModel: PagerViewModel by viewModels {
-        val database = AppDatabase.get(applicationContext)
-        val repository = MessageRepository(database.messageDao())
 
-        object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                if (modelClass.isAssignableFrom(PagerViewModel::class.java)) {
-                    @Suppress("UNCHECKED_CAST")
-                    return PagerViewModel(repository,applicationContext) as T
-                }
-                throw IllegalArgumentException("Unknown ViewModel class")
-            }
-        }
 
-    }
     private val permissionLauncher=
         registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
@@ -86,11 +70,33 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        permissionLauncher.launch(
-            PermissionHelper.bluetoothPermissions()
-        )
         setContent {
+            LaunchedEffect(Unit){
+                permissionLauncher.launch(
+                    PermissionHelper.bluetoothPermissions()
+                )
+            }
             Project1projectTheme {
+                // 1️⃣ Create pagerId ONCE (UI responsibility)
+                val pagerId = remember {
+                    PagerIdManager.getOrCreatePagerId(applicationContext)
+                }
+
+                // 2️⃣ Create ViewModel using that pagerId
+                val pagerViewModel: PagerViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return PagerViewModel(
+                                repository = MessageRepository(
+                                    AppDatabase.get(applicationContext).messageDao()
+                                ),
+                                myPagerId = pagerId
+                            ) as T
+                        }
+                    }
+                )
+
+                // 3️⃣ App UI
                 // 🔑 REQUIRED state
                 var connectedTransport by remember {
                     mutableStateOf<MessageTransport?>(null)
@@ -148,6 +154,7 @@ fun PagerScreen(
 
         // -------- APP TITLE --------
         var showClearDialog by remember { mutableStateOf(false) }
+
        Row(
            modifier = Modifier
                .fillMaxWidth()
@@ -171,6 +178,14 @@ fun PagerScreen(
                )
            }
        }
+        Text(
+            text = "My Pager ID: ${viewModel.myPagerId}",
+            color = Color.White.copy(alpha = 0.8f),
+            fontSize = 13.sp
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         if (showClearDialog) {
             AlertDialog(
                 onDismissRequest = { showClearDialog = false },
@@ -251,12 +266,24 @@ fun PagerScreen(
                             ),
                             elevation=CardDefaults.cardElevation(4.dp)
                         ) {
+
+
                             Column(
                                 modifier = Modifier.padding(
                                     horizontal = 14.dp,
                                     vertical = 10.dp
                                 )
                             ){
+                                Text(
+                                    text = if (msg.type == MessageType.SENT)
+                                        "To: Receiver Pager ID"
+                                    else
+                                        "From: Nearby Pager",
+                                    fontSize = 12.sp,
+                                    color = Color.White.copy(alpha = 0.7f)
+                                )
+
+                                Spacer(modifier = Modifier.height(4.dp))
                                 //Message text
                                 Text(
                                     text=msg.text,
@@ -293,19 +320,10 @@ fun PagerScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        var receiverPagerId by remember { mutableStateOf("")}
-
-        OutlinedTextField(
-            value=receiverPagerId,
-            onValueChange={receiverPagerId = it },
-            label={Text("Reciever Pager Id")},
-            modifier = Modifier.fillMaxWidth()
-
-        )
 
         // -------- INPUT SECTION --------
         PagerInputUI(
-            onSendClick = { text ->
+            onSendClick = { text,receiverPagerId ->
                 viewModel.sendMessage(text,receiverPagerId)
             }
         )

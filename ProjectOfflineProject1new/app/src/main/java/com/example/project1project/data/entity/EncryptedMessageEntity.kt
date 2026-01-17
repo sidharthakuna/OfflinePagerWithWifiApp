@@ -10,5 +10,6 @@ data class EncryptedMessageEntity(
     @PrimaryKey val id: String,
     val encryptedText:String,
     val timestamp:Long,
-    val type : MessageType   //Sent or Receive
+    val type : MessageType ,  //Sent or Receive
+    val senderPagerId:String
 )

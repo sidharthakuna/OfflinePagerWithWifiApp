@@ -1,28 +1,22 @@
 package com.example.project1project
 
-import com.example.project1project.mesh.MessagePacket
-import com.example.project1project.identity.PagerIdManager
-import java.util.UUID
-
-import android.content.Context
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.project1project.data.MessageRepository
-import kotlinx.coroutines.launch
-
-//Connect Transport to viewModel
 import com.example.project1project.communication.MessageTransport
+import com.example.project1project.data.MessageRepository
+import com.example.project1project.mesh.MessagePacket
 import com.example.project1project.security.CryptoUtils
+import kotlinx.coroutines.launch
+import java.util.UUID
+
+
 
 class PagerViewModel(
     private val repository: MessageRepository,
-    private val context:Context
+    val myPagerId:String
 ) : ViewModel() {
-
-    val myPagerId:String = PagerIdManager.getPagerId(context)
-        ?: throw IllegalStateException("pager ID not set")
 
     private var transport : MessageTransport? = null
 
@@ -61,7 +55,10 @@ class PagerViewModel(
             )
 
             //Save only sender's copy
-            repository.send(text)
+            repository.send(
+                text=text,
+                myPagerId=myPagerId
+                )
             loadMessages()
 
             //sends packet into the mesh
@@ -69,28 +66,23 @@ class PagerViewModel(
         }
     }
     private fun handleIncomingPacket(packet: MessagePacket) {
-        if (seenPacketIds.contains(packet.packetId)) return
-        seenPacketIds.add(packet.packetId)
+        if(!seenPacketIds.add(packet.packetId)) return
+        if(packet.hopCount >= packet.maxHops) return
 
-        if (packet.hopCount >= packet.maxHops) return
-
-        if (packet.toPagerId == myPagerId) {
+        if(packet.toPagerId == myPagerId){
             val payload = packet.encryptedPayload
-
             viewModelScope.launch {
-                repository.receive(payload)
+                repository.receive(
+                    encryptedText = payload,
+                    senderPagerId = packet.fromPagerId
+                )
+
                 loadMessages()
             }
-            return
+        }else{
+            transport?.send(packet.copy(hopCount=packet.hopCount+1))
         }
-
-        transport?.send(
-            packet.copy(hopCount = packet.hopCount + 1)
-        )
     }
-
-
-
     //For clearing the chart
     fun clearChat(){
         viewModelScope.launch{

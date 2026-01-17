@@ -16,43 +16,48 @@ class MessageRepository(
     private val messageDao : MessageDao
 ){
 
-    //Load messages from DB (decrypt for UI)
-    suspend fun getMessages():List<PagerMessage> =
-        withContext(Dispatchers.IO){
-            messageDao.getAll().map{
+    suspend fun getMessages(): List<PagerMessage> =
+        withContext(Dispatchers.IO) {
+            messageDao.getAll().map {
                 PagerMessage(
-                    id=it.id,
-                    text=CryptoUtils.decrypt(it.encryptedText),
-                    timestamp=it.timestamp,
-                    type=it.type
+                    id = it.id,
+                    text = CryptoUtils.decrypt(it.encryptedText),
+                    timestamp = it.timestamp,
+                    type = it.type,
+                    senderPagerId = it.senderPagerId
                 )
             }
         }
-    // Send messages (encrypt -> save )
-    suspend fun send(text : String)=
-        withContext(Dispatchers.IO){
+
+    //Load messages from DB (decrypt for UI)
+    suspend fun send(text: String, myPagerId: String) =
+        withContext(Dispatchers.IO) {
             val encryptedText = CryptoUtils.encrypt(text)
 
             messageDao.insert(
                 EncryptedMessageEntity(
-                    id=UUID.randomUUID().toString(),
-                    encryptedText=encryptedText,
-                    timestamp=System.currentTimeMillis(),
-                    type=MessageType.SENT
+                    id = UUID.randomUUID().toString(),
+                    encryptedText = encryptedText,
+                    timestamp = System.currentTimeMillis(),
+                    type = MessageType.SENT,
+                    senderPagerId = myPagerId   // ✅ FIX
                 )
             )
-            //LIMIT STORAGE
+
             messageDao.keepLastMessages(500)
         }
+
+
     //Receive message (already encrypted)
-    suspend fun receive(encryptedText: String) =
+    suspend fun receive(encryptedText: String, senderPagerId: String) =
         withContext(Dispatchers.IO) {
             messageDao.insert(
                 EncryptedMessageEntity(
                     id = UUID.randomUUID().toString(),
                     encryptedText = encryptedText,
                     timestamp = System.currentTimeMillis(),
-                    type=MessageType.RECEIVED
+                    type=MessageType.RECEIVED,
+                    senderPagerId=senderPagerId,
                 )
             )
 

@@ -6,5 +6,6 @@ data class MessagePacket (
     val toPagerId: String,
     val encryptedPayload:String,
     val hopCount:Int,
-    val maxHops:Int
+    val maxHops:Int,
+
 )

@@ -15,8 +15,11 @@ data class PagerMessage(
     val text: String,
 
     // Time when the message was created
+
     val timestamp: Long,
-    val type: MessageType
+    val type: MessageType,
+    val senderPagerId:String,  //New
+
 
     //NEW: MESSAGE DIRECTION
 )

@@ -1,9 +1,13 @@
 package com.example.project1project.communication
 import com.example.project1project.mesh.MessagePacket
+import com.example.project1project.ui.connection.ConnectionScreen
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+
 
 
 
@@ -17,11 +21,12 @@ class SimulatedTransport : MessageTransport {
 
     private var listener: ((MessagePacket) -> Unit)? = null
 
-    @OptIn(DelicateCoroutinesApi::class)
+    private val scope= CoroutineScope(Dispatchers.Default)
+
     override fun send(packet: MessagePacket) {
         // Simulate network delay
-        GlobalScope.launch {
-            delay(500)
+        scope.launch {
+            delay(300)
             listener?.invoke(packet)
         }
     }

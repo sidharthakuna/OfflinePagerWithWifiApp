@@ -1,10 +1,15 @@
 package com.example.project1project
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.layout.imePadding
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -16,11 +21,12 @@ import kotlinx.coroutines.delay
 @Composable
 fun PagerInputUI(
     // Callback when SEND button is clicked
-    onSendClick: (String) -> Unit
+    onSendClick: (String,String) -> Unit
 
 ) {
     // Holds the text typed by the user
-    var messageText by remember { mutableStateOf("") }
+    var message by remember { mutableStateOf("") }
+    var receiverId by remember {mutableStateOf("")}
 
     // Helps keyboard focus
     val focusRequester = remember { FocusRequester() }
@@ -30,13 +36,25 @@ fun PagerInputUI(
     // Vertical layout for input field and buttons
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().imePadding() //pushed UI above keyboard
     ) {
+        //Receivr PagerID
+        OutlinedTextField(
+            value=receiverId,
+            onValueChange={receiverId=it},
+            label={ Text("REceiverPager Id")},
+            modifier=Modifier.fillMaxWidth(),
+            singleLine=true,
+            keyboardOptions= KeyboardOptions(
+                imeAction = ImeAction.Next
+            )
+
+        )
 
         // Message input field
         OutlinedTextField(
-            value = messageText,
-            onValueChange = { messageText = it },
+            value = message,
+            onValueChange = { message = it },
             placeholder = {
                 Text("Type pager message...", color = Color.LightGray)
             },
@@ -62,10 +80,9 @@ fun PagerInputUI(
         // SEND button
         Button(
             onClick = {
-                if (messageText.isNotBlank()) {
-                    onSendClick(messageText)
-                    messageText = ""
-
+                if (receiverId.isNotBlank() && message.isNotBlank()) {
+                    onSendClick(message,receiverId)
+                    message = ""
                     //keep keyboard open after send
                     focusRequester.requestFocus()
                 }
