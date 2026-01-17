@@ -9,7 +9,6 @@ import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.project1project.data.MessageRepository
 import kotlinx.coroutines.launch
 
@@ -22,7 +21,8 @@ class PagerViewModel(
     private val context:Context
 ) : ViewModel() {
 
-    lateinit var myPagerId : String
+    val myPagerId:String = PagerIdManager.getPagerId(context)
+        ?: throw IllegalStateException("pager ID not set")
 
     private var transport : MessageTransport? = null
 
@@ -33,7 +33,6 @@ class PagerViewModel(
     val messages = mutableStateListOf<PagerMessage>()
 
     init {
-        myPagerId= PagerIdManager.getOrCreatePagerId(context)
         loadMessages()
     }
 
@@ -69,29 +68,25 @@ class PagerViewModel(
             transport?.send(packet)
         }
     }
-    private fun handleIncomingPacket(packet:MessagePacket){
-        //Drop if already seen
-        if(seenPacketIds.contains(packet.packetId)) return
+    private fun handleIncomingPacket(packet: MessagePacket) {
+        if (seenPacketIds.contains(packet.packetId)) return
         seenPacketIds.add(packet.packetId)
 
-        //Drop if hop limit exceeded
-        if(packet.hopCount >= packet.maxHops) return
+        if (packet.hopCount >= packet.maxHops) return
 
-        //if this device is the receiver -> decrypt & store
-        if(packet.toPagerId==myPagerId){
+        if (packet.toPagerId == myPagerId) {
+            val payload = packet.encryptedPayload
+
             viewModelScope.launch {
-                repository.receive(packet.encryptedPayload)
+                repository.receive(payload)
                 loadMessages()
             }
             return
         }
 
-        //Otherwise -> forward(hop)
-        val forwardedPacket = packet.copy(
-            hopCount= packet.hopCount+1
+        transport?.send(
+            packet.copy(hopCount = packet.hopCount + 1)
         )
-
-        transport?.send(forwardedPacket)
     }
 
 
