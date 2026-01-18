@@ -12,24 +12,12 @@ class ConnectionViewModel : ViewModel() {
     var pagerId by mutableStateOf("")
         private set
 
-    var selectedTransport by mutableStateOf(TransportType.SIMULATED)
-        private set
-
     fun updatePagerId(id: String) {
         pagerId = id
-    }
-
-    fun selectTransport(type: TransportType) {
-        selectedTransport = type
-    }
-
-    fun connect(onConnected: (MessageTransport) -> Unit) {
-        // CLEANUP PHASE: only simulated transport
-        val transport = SimulatedTransport()
-        onConnected(transport)
     }
 }
 
 enum class TransportType {
-    SIMULATED, WIFI
+
+    SIMULATED
 }

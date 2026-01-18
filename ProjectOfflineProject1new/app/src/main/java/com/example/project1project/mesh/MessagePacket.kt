@@ -1,5 +1,7 @@
 package com.example.project1project.mesh
 
+import java.io.Serializable
+
 data class MessagePacket (
     val packetId:String,
     val fromPagerId:String,
@@ -8,4 +10,4 @@ data class MessagePacket (
     val hopCount:Int,
     val maxHops:Int,
 
-)
+) : Serializable

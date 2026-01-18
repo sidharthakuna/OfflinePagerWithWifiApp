@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -78,9 +79,14 @@ class MainActivity : ComponentActivity() {
             }
             Project1projectTheme {
                 // 1️⃣ Create pagerId ONCE (UI responsibility)
-                val pagerId = remember {
-                    PagerIdManager.getOrCreatePagerId(applicationContext)
+                val context = LocalContext.current
+
+                val pagerId by remember {
+                    mutableStateOf(
+                        PagerIdManager.getOrCreatePagerId(context)
+                    )
                 }
+
 
                 // 2️⃣ Create ViewModel using that pagerId
                 val pagerViewModel: PagerViewModel = viewModel(
@@ -276,9 +282,9 @@ fun PagerScreen(
                             ){
                                 Text(
                                     text = if (msg.type == MessageType.SENT)
-                                        "To: Receiver Pager ID"
+                                        "From: ${viewModel.myPagerId} → To: ${msg.receiverPagerId}"
                                     else
-                                        "From: Nearby Pager",
+                                        "From: ${msg.senderPagerId} → To: ${viewModel.myPagerId}",
                                     fontSize = 12.sp,
                                     color = Color.White.copy(alpha = 0.7f)
                                 )

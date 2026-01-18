@@ -17,7 +17,7 @@ interface MessageTransport{
     //Send encrypted message to another device
     fun send(packet:MessagePacket)
 
-    //start listening for incomming encrypted messages
+    //start listening for incoming encrypted messages
     fun startListening(onPacketReceived:(MessagePacket)-> Unit)
 
     //Stop listening (clean up)

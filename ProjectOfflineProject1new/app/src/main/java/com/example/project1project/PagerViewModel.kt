@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.project1project.communication.MessageTransport
 import com.example.project1project.data.MessageRepository
+import com.example.project1project.mesh.MeshRouter
 import com.example.project1project.mesh.MessagePacket
 import com.example.project1project.security.CryptoUtils
 import kotlinx.coroutines.launch
@@ -17,6 +18,8 @@ class PagerViewModel(
     private val repository: MessageRepository,
     val myPagerId:String
 ) : ViewModel() {
+
+    private lateinit var meshRouter: MeshRouter
 
     private var transport : MessageTransport? = null
 
@@ -57,8 +60,9 @@ class PagerViewModel(
             //Save only sender's copy
             repository.send(
                 text=text,
-                myPagerId=myPagerId
-                )
+                myPagerId=myPagerId,
+                receiverPagerId=toPagerId
+            )
             loadMessages()
 
             //sends packet into the mesh
@@ -66,23 +70,20 @@ class PagerViewModel(
         }
     }
     private fun handleIncomingPacket(packet: MessagePacket) {
-        if(!seenPacketIds.add(packet.packetId)) return
-        if(packet.hopCount >= packet.maxHops) return
 
-        if(packet.toPagerId == myPagerId){
-            val payload = packet.encryptedPayload
-            viewModelScope.launch {
-                repository.receive(
-                    encryptedText = payload,
-                    senderPagerId = packet.fromPagerId
-                )
+        if (!seenPacketIds.add(packet.packetId)) return
 
-                loadMessages()
-            }
-        }else{
-            transport?.send(packet.copy(hopCount=packet.hopCount+1))
+        if (packet.toPagerId != myPagerId) return   // ❗ TEMP FIX
+
+        viewModelScope.launch {
+            repository.receive(
+                encryptedText = packet.encryptedPayload,
+                senderPagerId = packet.fromPagerId
+            )
+            loadMessages()
         }
     }
+
     //For clearing the chart
     fun clearChat(){
         viewModelScope.launch{
@@ -91,12 +92,35 @@ class PagerViewModel(
         }
     }
 
-    fun setTransport(t: MessageTransport){
-        transport =t
+    fun setTransport(t: MessageTransport) {
+        transport?.stop()
+        transport = t
+
+        meshRouter = MeshRouter(
+            myPagerId = myPagerId,
+
+            // Forwarding = send to transport
+            forward = { packet ->
+                transport?.send(packet)
+            },
+
+            // Delivery = store in DB
+            deliver = { packet ->
+                viewModelScope.launch {
+                    repository.receive(
+                        encryptedText = packet.encryptedPayload,
+                        senderPagerId = packet.fromPagerId
+                    )
+                    loadMessages()
+                }
+            }
+        )
+
         transport?.startListening { packet ->
-            //step 3 will implement this
-            handleIncomingPacket(packet)
+            meshRouter.onPacketReceived(packet)
         }
     }
+
+
 }
 

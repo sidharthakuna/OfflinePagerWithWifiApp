@@ -38,7 +38,7 @@ fun PagerInputUI(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth().imePadding() //pushed UI above keyboard
     ) {
-        //Receivr PagerID
+        //Receiver PagerID
         OutlinedTextField(
             value=receiverId,
             onValueChange={receiverId=it},

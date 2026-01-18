@@ -24,13 +24,15 @@ class MessageRepository(
                     text = CryptoUtils.decrypt(it.encryptedText),
                     timestamp = it.timestamp,
                     type = it.type,
-                    senderPagerId = it.senderPagerId
+                    senderPagerId = it.senderPagerId,
+                    receiverPagerId = it.receiverPagerId   // ✅ FIX
                 )
             }
         }
 
+
     //Load messages from DB (decrypt for UI)
-    suspend fun send(text: String, myPagerId: String) =
+    suspend fun send(text: String, myPagerId: String,receiverPagerId:String) =
         withContext(Dispatchers.IO) {
             val encryptedText = CryptoUtils.encrypt(text)
 
@@ -40,7 +42,8 @@ class MessageRepository(
                     encryptedText = encryptedText,
                     timestamp = System.currentTimeMillis(),
                     type = MessageType.SENT,
-                    senderPagerId = myPagerId   // ✅ FIX
+                    senderPagerId = myPagerId,   // ✅ FIX
+                    receiverPagerId = receiverPagerId
                 )
             )
 
@@ -56,8 +59,9 @@ class MessageRepository(
                     id = UUID.randomUUID().toString(),
                     encryptedText = encryptedText,
                     timestamp = System.currentTimeMillis(),
-                    type=MessageType.RECEIVED,
-                    senderPagerId=senderPagerId,
+                    type = MessageType.RECEIVED,
+                    senderPagerId = senderPagerId,
+                    receiverPagerId = null   // ✅ IMPORTANT
                 )
             )
 
